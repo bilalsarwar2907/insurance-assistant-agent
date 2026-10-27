@@ -8,3 +8,4 @@ FAKE_DOC = {"source": "cancellation.txt", "text": "You can cancel with 30 days n
 def fake_rag(monkeypatch):
     monkeypatch.setattr(rag, "search_policies", lambda q: FAKE_DOC)
     monkeypatch.setattr(rag, "is_relevant", lambda q, t: "cancel" in q.lower())
+    monkeypatch.setattr(rag, "write_answer", lambda q, t: "You can cancel with 30 days notice.")

@@ -83,8 +83,11 @@ def rag_node(state: AgentState) -> dict:
     found = rag.search_policies(question)
     if found["score"] < rag.THRESHOLD or not rag.is_relevant(question, found["text"]):
         return {"route": "handover"}
+    answer = rag.write_answer(question, found["text"])
+    if "NOT IN TEXT" in answer:
+        return {"route": "handover"}
     return {
-        "reply": f"{found['text']} [Source: {found['source']}]",
+        "reply": f"{answer} [Source: {found['source']}]",
         "status": "answered",
         "sources": [found["source"]],
     }

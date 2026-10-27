@@ -58,3 +58,7 @@ def test_low_score_hands_over(monkeypatch):
     low = {"source": "cancellation.txt", "text": "x", "score": 0.3}
     monkeypatch.setattr(rag, "search_policies", lambda q: low)
     assert run("How do I cancel my policy?")["status"] == "handover"  
+
+def test_not_in_text_hands_over(monkeypatch):
+    monkeypatch.setattr(rag, "write_answer", lambda q, t: "NOT IN TEXT")
+    assert run("How do I cancel my policy?")["status"] == "handover"    

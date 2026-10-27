@@ -52,3 +52,15 @@ def search_policies(query: str) -> dict:
 def is_relevant(question: str, text: str) -> bool:
     reply = get_llm().invoke(CHECK_PROMPT.format(question=question, text=text))
     return reply.text.strip().upper().startswith("YES")
+
+ANSWER_PROMPT = """Answer the customer's question using ONLY the text below.
+Keep it to 1-2 short sentences.
+If the text does not answer it, reply exactly: NOT IN TEXT
+
+Question: {question}
+Text: {text}"""
+
+
+def write_answer(question: str, text: str) -> str:
+    reply = get_llm().invoke(ANSWER_PROMPT.format(question=question, text=text))
+    return reply.text.strip()
