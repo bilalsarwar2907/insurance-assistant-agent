@@ -1,5 +1,6 @@
 import re
 from app.tools import get_policy, claim_status
+from langgraph.graph import StateGraph, START, END
 from typing import TypedDict
 
 
@@ -52,3 +53,42 @@ def guardrail(state: AgentState) -> dict:
 
 def fallback_node(state: AgentState) -> dict:
     return {"reply": FALLBACK_REPLY, "status": "blocked"}
+
+# Turns tool data into a reply
+def respond_node(state: AgentState) -> dict:
+    return {"reply": f"Here is what I found: {state['tool_result']}", "status": "answered"}
+
+
+# Signposts (conditional edges)
+def after_guardrail(state: AgentState) -> str:
+    return "fallback" if state.get("route") == "blocked" else "router"
+
+
+def after_router(state: AgentState) -> str:
+    return state["route"]          # "claim", "policy" or "handover"
+
+
+def after_tool(state: AgentState) -> str:
+    return "handover" if state["route"] == "handover" else "respond"
+
+
+# Build the graph
+builder = StateGraph(AgentState)
+builder.add_node("guardrail", guardrail)
+builder.add_node("router", router)
+builder.add_node("claim", claim_node)
+builder.add_node("policy", policy_node)
+builder.add_node("respond", respond_node)
+builder.add_node("handover", handover_node)
+builder.add_node("fallback", fallback_node)
+
+builder.add_edge(START, "guardrail")
+builder.add_conditional_edges("guardrail", after_guardrail)
+builder.add_conditional_edges("router", after_router)
+builder.add_conditional_edges("claim", after_tool)
+builder.add_conditional_edges("policy", after_tool)
+builder.add_edge("respond", END)
+builder.add_edge("handover", END)
+builder.add_edge("fallback", END)
+
+graph = builder.compile()
