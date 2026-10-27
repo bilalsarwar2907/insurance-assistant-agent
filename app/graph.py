@@ -2,6 +2,11 @@ import re
 from app.tools import get_policy, claim_status
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict
+import operator
+from typing import TypedDict, Annotated
+from langgraph.checkpoint.memory import InMemorySaver
+
+
 
 
 class AgentState(TypedDict, total=False):
@@ -10,6 +15,7 @@ class AgentState(TypedDict, total=False):
     tool_result: dict  # data from get_policy / claim_status
     reply: str         # answer to send back
     status: str        # e.g. "answered" or "handover"
+    history: Annotated[list[str], operator.add]   # add, don't replace
 
 def router(state: AgentState) -> dict:
     message = state["message"]
@@ -46,9 +52,8 @@ FALLBACK_REPLY = "Sorry, I can't help with that request."
 
 def guardrail(state: AgentState) -> dict:
     text = state["message"].lower()
-    if any(word in text for word in BLOCKED):
-        return {"route": "blocked"}
-    return {}
+    route = "blocked" if any(word in text for word in BLOCKED) else "ok"
+    return {"route": route, "history": [state["message"]]}
 
 
 def fallback_node(state: AgentState) -> dict:
@@ -91,4 +96,4 @@ builder.add_edge("respond", END)
 builder.add_edge("handover", END)
 builder.add_edge("fallback", END)
 
-graph = builder.compile()
+graph = builder.compile(checkpointer=InMemorySaver())
