@@ -1,4 +1,5 @@
 import re
+from app import rag
 from app.tools import get_policy, claim_status
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict
@@ -16,6 +17,7 @@ class AgentState(TypedDict, total=False):
     reply: str         # answer to send back
     status: str        # e.g. "answered" or "handover"
     history: Annotated[list[str], operator.add]   # add, don't replace
+    sources: list[str]   # policy files used for the answer
 
 def router(state: AgentState) -> dict:
     message = state["message"]
@@ -23,7 +25,7 @@ def router(state: AgentState) -> dict:
         return {"route": "claim"}
     if "POL-" in message:
         return {"route": "policy"}
-    return {"route": "handover"}    
+    return {"route": "rag"}  # default to RAG (retrieval-augmented generation)
 
 def claim_node(state: AgentState) -> dict:
     match = re.search(r"CLM-\d+", state["message"])
@@ -53,7 +55,7 @@ FALLBACK_REPLY = "Sorry, I can't help with that request."
 def guardrail(state: AgentState) -> dict:
     text = state["message"].lower()
     route = "blocked" if any(word in text for word in BLOCKED) else "ok"
-    return {"route": route, "history": [state["message"]]}
+    return {"route": route, "history": [state["message"]], "sources": []}
 
 
 def fallback_node(state: AgentState) -> dict:
@@ -76,6 +78,21 @@ def after_router(state: AgentState) -> str:
 def after_tool(state: AgentState) -> str:
     return "handover" if state["route"] == "handover" else "respond"
 
+def rag_node(state: AgentState) -> dict:
+    question = state["message"]
+    found = rag.search_policies(question)
+    if found["score"] < rag.THRESHOLD or not rag.is_relevant(question, found["text"]):
+        return {"route": "handover"}
+    return {
+        "reply": f"{found['text']} [Source: {found['source']}]",
+        "status": "answered",
+        "sources": [found["source"]],
+    }
+
+
+def after_rag(state: AgentState) -> str:
+    return "handover" if state["route"] == "handover" else END
+
 
 # Build the graph
 builder = StateGraph(AgentState)
@@ -86,6 +103,8 @@ builder.add_node("policy", policy_node)
 builder.add_node("respond", respond_node)
 builder.add_node("handover", handover_node)
 builder.add_node("fallback", fallback_node)
+builder.add_node("rag", rag_node)
+builder.add_conditional_edges("rag", after_rag)
 
 builder.add_edge(START, "guardrail")
 builder.add_conditional_edges("guardrail", after_guardrail)

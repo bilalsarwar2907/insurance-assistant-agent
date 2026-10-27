@@ -26,5 +26,5 @@ def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(
         reply=result["reply"],
         status=result["status"],
-        sources=[],          # filled by RAG on Day 3
+        sources=result.get("sources", []),          # filled by RAG on Day 3
     )   
