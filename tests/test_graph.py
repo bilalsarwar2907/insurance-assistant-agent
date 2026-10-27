@@ -1,5 +1,6 @@
 from app.graph import graph, HANDOVER_REPLY, FALLBACK_REPLY
 import uuid
+from app import rag
 
 
 def run(message):
@@ -41,3 +42,19 @@ def test_blocked_request():
 
 def test_unclear_request_hands_over():
     assert run("hello")["status"] == "handover"
+
+def test_policy_question_answers_with_source():
+    result = run("How do I cancel my policy?")
+    assert result["status"] == "answered"
+    assert result["sources"] == ["cancellation.txt"]
+    assert "[Source: cancellation.txt]" in result["reply"]
+
+
+def test_irrelevant_question_hands_over():
+    assert run("Is my cat covered?")["status"] == "handover"
+
+
+def test_low_score_hands_over(monkeypatch):
+    low = {"source": "cancellation.txt", "text": "x", "score": 0.3}
+    monkeypatch.setattr(rag, "search_policies", lambda q: low)
+    assert run("How do I cancel my policy?")["status"] == "handover"  
