@@ -38,3 +38,17 @@ HANDOVER_REPLY = "I can't answer that reliably. I'll connect you with a colleagu
 
 def handover_node(state: AgentState) -> dict:
     return {"reply": HANDOVER_REPLY, "status": "handover"}
+
+BLOCKED = ["password", "hack", "other customer"]
+FALLBACK_REPLY = "Sorry, I can't help with that request."
+
+
+def guardrail(state: AgentState) -> dict:
+    text = state["message"].lower()
+    if any(word in text for word in BLOCKED):
+        return {"route": "blocked"}
+    return {}
+
+
+def fallback_node(state: AgentState) -> dict:
+    return {"reply": FALLBACK_REPLY, "status": "blocked"}
