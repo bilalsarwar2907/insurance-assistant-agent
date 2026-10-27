@@ -32,3 +32,9 @@ def policy_node(state: AgentState) -> dict:
     if result is None:
         return {"route": "handover"}
     return {"tool_result": result}
+
+HANDOVER_REPLY = "I can't answer that reliably. I'll connect you with a colleague."
+
+
+def handover_node(state: AgentState) -> dict:
+    return {"reply": HANDOVER_REPLY, "status": "handover"}
