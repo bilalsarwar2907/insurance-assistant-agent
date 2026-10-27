@@ -24,3 +24,7 @@ def test_chat_missing_message():
 
 def test_chat_missing_session_id():
     response = client.post("/chat",json ={"message":"hello"})    
+
+def test_chat_uses_agent():
+    response = client.post("/chat", json={"session_id": "api-1", "message": "CLM-002"})
+    assert response.json()["status"] == "answered"    
