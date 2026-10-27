@@ -1,4 +1,5 @@
 from pathlib import Path
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -32,3 +33,15 @@ def search_policies(query: str) -> dict:
     vector = embeddings.embed_query(query)
     best = client.query_points(COLLECTION, query=vector, limit=1, with_payload=True).points[0]
     return {"source": best.payload["source"], "text": best.payload["text"], "score": best.score}
+
+THRESHOLD = 0.60
+llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash-lite")
+
+CHECK_PROMPT = """Question: {question}
+Text: {text}
+Does the text answer the question? Reply only YES or NO."""
+
+
+def is_relevant(question: str, text: str) -> bool:
+    reply = llm.invoke(CHECK_PROMPT.format(question=question, text=text))
+    return reply.text.strip().upper().startswith("YES")
