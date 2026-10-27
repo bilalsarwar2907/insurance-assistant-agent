@@ -1,3 +1,5 @@
+import re
+from app.tools import get_policy, claim_status
 from typing import TypedDict
 
 
@@ -15,3 +17,18 @@ def router(state: AgentState) -> dict:
     if "POL-" in message:
         return {"route": "policy"}
     return {"route": "handover"}    
+
+def claim_node(state: AgentState) -> dict:
+    match = re.search(r"CLM-\d+", state["message"])
+    result = claim_status(match.group())
+    if result is None:
+        return {"route": "handover"}
+    return {"tool_result": result}
+
+
+def policy_node(state: AgentState) -> dict:
+    match = re.search(r"POL-\d+", state["message"])
+    result = get_policy(match.group())
+    if result is None:
+        return {"route": "handover"}
+    return {"tool_result": result}
