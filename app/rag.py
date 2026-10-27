@@ -1,9 +1,9 @@
 from functools import lru_cache
 from pathlib import Path
-
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from qdrant_client import QdrantClient, models
+from langfuse import observe
 
 load_dotenv()
 
@@ -14,6 +14,12 @@ THRESHOLD = 0.60
 CHECK_PROMPT = """Question: {question}
 Text: {text}
 Does the text answer the question? Reply only YES or NO."""
+
+@observe(name="qdrant_search", as_type="retriever")
+def search_policies(query: str) -> dict:
+    vector = get_embeddings().embed_query(query)
+    best = get_client().query_points(COLLECTION, query=vector, limit=1, with_payload=True).points[0]
+    return {"source": best.payload["source"], "text": best.payload["text"], "score": best.score}
 
 
 @lru_cache
@@ -43,12 +49,6 @@ def get_client():
     return client
 
 
-def search_policies(query: str) -> dict:
-    vector = get_embeddings().embed_query(query)
-    best = get_client().query_points(COLLECTION, query=vector, limit=1, with_payload=True).points[0]
-    return {"source": best.payload["source"], "text": best.payload["text"], "score": best.score}
-
-
 def is_relevant(question: str, text: str) -> bool:
     reply = get_llm().invoke(CHECK_PROMPT.format(question=question, text=text))
     return reply.text.strip().upper().startswith("YES")
@@ -59,7 +59,6 @@ If the text does not answer it, reply exactly: NOT IN TEXT
 
 Question: {question}
 Text: {text}"""
-
 
 def write_answer(question: str, text: str) -> str:
     reply = get_llm().invoke(ANSWER_PROMPT.format(question=question, text=text))
