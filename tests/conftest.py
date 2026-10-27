@@ -1,3 +1,5 @@
+import os
+os.environ["LANGFUSE_TRACING_ENABLED"] = "false"  # tests never send traces
 import pytest
 from app import rag
 
