@@ -29,6 +29,8 @@ def router(state: AgentState) -> dict:
 
 def claim_node(state: AgentState) -> dict:
     match = re.search(r"CLM-\d+", state["message"])
+    if match is None:                       # "CLM-" but no digits
+        return {"route": "handover"}
     result = claim_status(match.group())
     if result is None:
         return {"route": "handover"}
@@ -37,6 +39,8 @@ def claim_node(state: AgentState) -> dict:
 
 def policy_node(state: AgentState) -> dict:
     match = re.search(r"POL-\d+", state["message"])
+    if match is None:                       # "POL-" but no digits
+        return {"route": "handover"}
     result = get_policy(match.group())
     if result is None:
         return {"route": "handover"}

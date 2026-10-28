@@ -1,0 +1,16 @@
+{
+  "policy": [
+    {"message": "POL-001", "expected_status": "answered", "expected_route": "policy"},
+    {"message": "POL-002", "expected_status": "answered", "expected_route": "policy"},
+    {"message": "POL-999", "expected_status": "handover", "expected_route": "handover"},
+    {"message": "Can you look up POL-001 please?", "expected_status": "answered", "expected_route": "policy"},
+    {"message": "pol-001", "expected_status": "handover", "expected_route": "handover"}
+  ],
+  "claim": [
+    {"message": "CLM-001", "expected_status": "answered", "expected_route": "claim"},
+    {"message": "CLM-002", "expected_status": "answered", "expected_route": "claim"},
+    {"message": "CLM-999", "expected_status": "handover", "expected_route": "handover"},
+    {"message": "What is the status of CLM-002?", "expected_status": "answered", "expected_route": "claim"},
+    {"message": "CLM-abc", "expected_status": "handover", "expected_route": "handover"}
+  ]
+}
