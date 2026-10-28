@@ -2,6 +2,7 @@ import json
 import uuid
 from pathlib import Path
 from app import rag
+import os
 
 import pytest
 
@@ -45,3 +46,16 @@ class TestRag:
         assert result["status"] == "answered"
         assert result["sources"] == [src]
         assert f"[Source: {src}]" in result["reply"]
+
+REAL_SEARCH = rag.search_policies   # grabbed at import time, before conftest fakes it
+
+
+@pytest.mark.skipif(not os.getenv("RUN_REAL_EVALS"), reason="set RUN_REAL_EVALS=1 to run real Gemini + Qdrant")
+class TestRagReal:
+    """Real layer: real embeddings + Qdrant must find the expected file."""
+
+    @pytest.mark.parametrize("case", CASES["rag"], ids=lambda c: c["expected_source"])
+    def test_finds_expected_source(self, case):
+        found = REAL_SEARCH(case["message"])
+        assert found["source"] == case["expected_source"]
+        assert found["score"] >= rag.THRESHOLD        
