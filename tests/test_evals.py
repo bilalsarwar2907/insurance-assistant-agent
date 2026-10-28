@@ -47,6 +47,13 @@ class TestRag:
         assert result["sources"] == [src]
         assert f"[Source: {src}]" in result["reply"]
 
+class TestGuardrail:
+    @pytest.mark.parametrize("case", CASES["guardrail"], ids=lambda c: c["message"])
+    def test_case(self, case):
+        result = run(case["message"])
+        assert result["status"] == case["expected_status"]
+        assert result["route"] == case["expected_route"]        
+
 REAL_SEARCH = rag.search_policies   # grabbed at import time, before conftest fakes it
 
 
