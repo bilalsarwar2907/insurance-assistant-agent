@@ -12,5 +12,12 @@
     {"message": "CLM-999", "expected_status": "handover", "expected_route": "handover"},
     {"message": "What is the status of CLM-002?", "expected_status": "answered", "expected_route": "claim"},
     {"message": "CLM-abc", "expected_status": "handover", "expected_route": "handover"}
+  ],
+    "rag": [
+    {"message": "How do I cancel my policy?", "expected_source": "cancellation.txt"},
+    {"message": "How many days do I have to report a claim?", "expected_source": "claims_deadline.txt"},
+    {"message": "Is flooding from rising sea levels covered?", "expected_source": "exclusions.txt"},
+    {"message": "Does my home insurance cover theft after a break-in?", "expected_source": "home_coverage.txt"},
+    {"message": "Is lost luggage covered when I travel?", "expected_source": "travel_coverage.txt"}
   ]
 }

@@ -1,6 +1,7 @@
 import json
 import uuid
 from pathlib import Path
+from app import rag
 
 import pytest
 
@@ -28,3 +29,19 @@ class TestClaimLookup:
         result = run(case["message"])
         assert result["status"] == case["expected_status"]
         assert result["route"] == case["expected_route"]        
+
+class TestRag:
+    """CI layer: if search finds file X, the reply must cite X (citation logic, not search quality)."""
+
+    @pytest.mark.parametrize("case", CASES["rag"], ids=lambda c: c["expected_source"])
+    def test_cites_found_source(self, case, monkeypatch):
+        src = case["expected_source"]
+        monkeypatch.setattr(rag, "search_policies", lambda q: {"source": src, "text": "policy text", "score": 0.9})
+        monkeypatch.setattr(rag, "is_relevant", lambda q, t: True)
+        monkeypatch.setattr(rag, "write_answer", lambda q, t: "Short answer.")
+
+        result = run(case["message"])
+
+        assert result["status"] == "answered"
+        assert result["sources"] == [src]
+        assert f"[Source: {src}]" in result["reply"]
