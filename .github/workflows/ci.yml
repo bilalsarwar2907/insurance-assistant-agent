@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          # 1. copy your repo onto the robot
+      - uses: actions/setup-python@v5      # 2. install Python
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -r requirements.txt   # 3. install pinned packages
+      - run: pytest -v                         # 4. run tests; any failure = red X
