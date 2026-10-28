@@ -2,13 +2,14 @@ from fastapi import FastAPI
 from app.graph import graph
 from app.models import ChatRequest, ChatResponse
 from app.observability import get_handler
+from app.observability import get_handler, langfuse_status
 
 app = FastAPI(title="Insurance Assistant Agent")
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+     return {"status": "ok", "langfuse": langfuse_status()}
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
